@@ -52,6 +52,12 @@ def parse_contents(contents, filename, date):
         elif 'xls' in filename:
             # Assume that the user uploaded an excel file
             df = pd.read_excel(io.BytesIO(decoded))
+            
+        df['DPS'] = df.apply(lambda row: row.Damage / row.Duration, axis=1)
+        df['CPS'] = df.apply(lambda row: row['Condition Cleanses'] / row.Duration, axis=1)
+        df['RPS'] = df.apply(lambda row: row['Boon Strips'] / row.Duration, axis=1)
+        df['HPS'] = df.apply(lambda row: row['Total Healing'] / row.Duration, axis=1)
+
     except Exception as e:
         print(e)
         return html.Div([
@@ -63,19 +69,20 @@ def parse_contents(contents, filename, date):
         html.H6(datetime.datetime.fromtimestamp(date)),
         html.P("Select X axis data"),
         dcc.Dropdown(id='xaxis-data',
+                     value='Fight Num',
                      options=[{'label':x, 'value':x} for x in df.columns]),
         html.P("Select Y axis data"),
         dcc.Dropdown(id='yaxis-data',
+                     value = 'Duration DPS',
                      options=[{'label':x, 'value':x} for x in df.columns]),
-        html.P("Select Z axis data (Not Functional Yet)"),
-        dcc.Dropdown(id='zaxis-data',
+        html.P("Select ColorBy"),
+        dcc.Dropdown(id='color-data',
+                     value = 'Profession',
                      options=[{'label':x, 'value':x} for x in df.columns]),
-        html.P("Fight Selector (Not Functional Yet)"),
-        dcc.RangeSlider(
-            min = 1,
-            max = df['Fight Num'].max(),
-            marks={i: f'Fights: {i}' if i == 1 else str(i) for i in range(1, df['Fight Num'].max())},
-        ),
+        html.P("Select SizeBy"),
+        dcc.Dropdown(id='size-data',
+                     value = 'Damage',
+                     options=[{'label':x, 'value':x} for x in df.columns]),
         html.Button(id="submit-button", children="Create Graph"),
         html.Hr(),
 
@@ -114,14 +121,17 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
               Input('submit-button','n_clicks'),
               State('stored-data','data'),
               State('xaxis-data','value'),
-              State('yaxis-data', 'value'))
-def make_graphs(n, data, x_data, y_data):
+              State('yaxis-data', 'value'),
+              State('color-data', 'value'),
+              State('size-data', 'value'))
+
+def make_graphs(n, data, x_data, y_data, c_data, s_data):
     if n is None:
         return dash.no_update
     else:
-        bar_fig = px.bar(data, x=x_data, y=y_data)
+        scatter_fig = px.scatter(data, x=x_data, y=y_data, color=c_data, size=s_data, hover_data=['Name','Profession', 'Role'])
         # print(data)
-        return dcc.Graph(figure=bar_fig)
+        return dcc.Graph(figure=scatter_fig)
 
 
 
