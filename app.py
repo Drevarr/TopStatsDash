@@ -83,6 +83,9 @@ def parse_contents(contents, filename, date):
         dcc.Dropdown(id='size-data',
                      value = 'Damage',
                      options=[{'label':x, 'value':x} for x in df.columns]),
+        dcc.Checklist(id='tick',
+                      options=[{'label': 'Enable linear x-axis ticks', 'value': 'linear'}],
+                      value=['linear']),
         html.Button(id="submit-button", children="Create Graph"),
         html.Hr(),
 
@@ -123,13 +126,19 @@ def update_output(list_of_contents, list_of_names, list_of_dates):
               State('xaxis-data','value'),
               State('yaxis-data', 'value'),
               State('color-data', 'value'),
-              State('size-data', 'value'))
+              State('size-data', 'value'),
+              Input("tick", "value"))
 
-def make_graphs(n, data, x_data, y_data, c_data, s_data):
+def make_graphs(n, data, x_data, y_data, c_data, s_data, tick_mode):
     if n is None:
         return dash.no_update
     else:
         scatter_fig = px.scatter(data, x=x_data, y=y_data, color=c_data, size=s_data, hover_data=['Name','Profession', 'Role'])
+        
+
+        if 'linear' in tick_mode:
+            scatter_fig.update_layout(xaxis=dict(tickmode='linear', tick0=1, dtick=1))
+
         # print(data)
         return dcc.Graph(figure=scatter_fig)
 
