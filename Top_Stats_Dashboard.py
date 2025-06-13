@@ -82,8 +82,8 @@ def main():
 
     # Sidebar filters
     st.sidebar.header("Filters")
-    selected_players = st.sidebar.multiselect("Select Players", options=df['name'].unique())
-    selected_professions = st.sidebar.multiselect("Select Professions", options=df['profession'].unique())
+    selected_players = st.sidebar.multiselect("Select Players", options=sorted(df['name'].unique()))
+    selected_professions = st.sidebar.multiselect("Select Professions", options=sorted(df['profession'].unique()))
     date_range = st.sidebar.date_input("Select Date Range", 
                                      [df['date'].min(), df['date'].max()],
                                      min_value=datetime.strptime(df['date'].min(), '%Y-%m-%d-%H:%M:%S'),
