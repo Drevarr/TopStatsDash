@@ -193,7 +193,7 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            x_type = st.radio("X-axis Type", ["Predefined"], key="x_type")
+            x_type = st.radio("X-axis Type", ["Predefined", "Custom"], key="x_type")
             if x_type == "Predefined":
                 x_metric = st.selectbox("Select X-axis Metric", available_metrics, index=0, key="x_predefined")
                 x_column = x_metric
@@ -202,13 +202,13 @@ def main():
                 x_formula = st.text_input("Enter X-axis Formula (e.g., 'damage / duration')", 
                                          value="damage", key="x_formula")
                 x_column = "custom_x"
-                x_label = "Custom X Metric"
+                x_label = x_formula.capitalize() #"Custom X Metric"
                 result = calculate_derived_stat(filtered_df, x_formula)
                 if result is not None:
                     filtered_df['custom_x'] = result
 
         with col2:
-            y_type = st.radio("Y-axis Type", ["Predefined"], key="y_type")
+            y_type = st.radio("Y-axis Type", ["Predefined", "Custom"], key="y_type")
             if y_type == "Predefined":
                 y_metric = st.selectbox("Select Y-axis Metric", available_metrics, index=1, key="y_predefined")
                 y_column = y_metric
@@ -217,13 +217,13 @@ def main():
                 y_formula = st.text_input("Enter Y-axis Formula (e.g., 'healing / duration')", 
                                          value="healing", key="y_formula")
                 y_column = "custom_y"
-                y_label = "Custom Y Metric"
+                y_label = y_formula.capitalize() #"Custom Y Metric"
                 result = calculate_derived_stat(filtered_df, y_formula)
                 if result is not None:
                     filtered_df['custom_y'] = result
 
         with col3:
-            size_type = st.radio("Bubble Size Type", ["Predefined"], key="size_type")
+            size_type = st.radio("Bubble Size Type", ["Predefined", "Custom"], key="size_type")
             if size_type == "Predefined":
                 size_metric = st.selectbox("Select Bubble Size Metric", available_metrics, index=2, key="size_predefined")
                 size_column = size_metric
@@ -232,7 +232,7 @@ def main():
                 size_formula = st.text_input("Enter Bubble Size Formula (e.g., 'num_fights * 10')", 
                                             value="num_fights", key="size_formula")
                 size_column = "custom_size"
-                size_label = "Custom Size Metric"
+                size_label = size_formula.capitalize() #"Custom Size Metric"
                 result = calculate_derived_stat(filtered_df, size_formula)
                 if result is not None:
                     filtered_df['custom_size'] = result
