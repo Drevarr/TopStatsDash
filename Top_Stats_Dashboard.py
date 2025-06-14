@@ -180,8 +180,11 @@ def main():
         st.header("Bubble Chart")
         
         # Available metrics
-        available_metrics = ['damage', 'damage_taken', 'healing', 'barrier', 
-                           'cleanses', 'boon_strips', 'resurrects', 'duration', 'num_fights']
+        available_metrics = ["damage", "down_contribution", "downs", "kills", "damage_taken", 
+                             "damage_barrier", "downed", "deaths", "cleanses", "boon_strips", 
+                             "resurrects", "healing", "barrier", "downed_healing", "stab_gen", 
+                             "migh_gen", "fury_gen", "quic_gen", "alac_gen", "prot_gen", "rege_gen", 
+                             "vigo_gen", "aeg_gen", "swif_gen", "resi_gen", "reso_gen", 'duration', 'num_fights'] 
         
         # Select or input custom metrics
         st.write("Select predefined metrics or enter custom formulas (using pandas eval syntax). Available columns: " + 
@@ -190,7 +193,7 @@ def main():
         col1, col2, col3 = st.columns(3)
         
         with col1:
-            x_type = st.radio("X-axis Type", ["Predefined", "Custom"], key="x_type")
+            x_type = st.radio("X-axis Type", ["Predefined"], key="x_type")
             if x_type == "Predefined":
                 x_metric = st.selectbox("Select X-axis Metric", available_metrics, index=0, key="x_predefined")
                 x_column = x_metric
@@ -205,7 +208,7 @@ def main():
                     filtered_df['custom_x'] = result
 
         with col2:
-            y_type = st.radio("Y-axis Type", ["Predefined", "Custom"], key="y_type")
+            y_type = st.radio("Y-axis Type", ["Predefined"], key="y_type")
             if y_type == "Predefined":
                 y_metric = st.selectbox("Select Y-axis Metric", available_metrics, index=1, key="y_predefined")
                 y_column = y_metric
@@ -220,7 +223,7 @@ def main():
                     filtered_df['custom_y'] = result
 
         with col3:
-            size_type = st.radio("Bubble Size Type", ["Predefined", "Custom"], key="size_type")
+            size_type = st.radio("Bubble Size Type", ["Predefined"], key="size_type")
             if size_type == "Predefined":
                 size_metric = st.selectbox("Select Bubble Size Metric", available_metrics, index=2, key="size_predefined")
                 size_column = size_metric
