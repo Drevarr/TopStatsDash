@@ -84,14 +84,14 @@ def main():
     st.sidebar.header("Filters")
     selected_players = st.sidebar.multiselect("Select Players", options=sorted(df['name'].unique()))
     selected_professions = st.sidebar.multiselect("Select Professions", options=sorted(df['profession'].unique()))
-    # Ensure df['date'] is in datetime format
-    df['date'] = pd.to_datetime(df['date'])
+    # Ensure df['date'] is in datetime format and convert to date only
+    df['date'] = pd.to_datetime(df['date']).dt.date
     # Date input with corrected min_value and max_value
     date_range = st.sidebar.date_input(
         "Select Date Range",
-        [df['date'].min().date(), df['date'].max().date()],
-        min_value=df['date'].min().date(),
-        max_value=df['date'].max().date()
+        [df['date'].min(), df['date'].max()],
+        min_value=df['date'].min(),
+        max_value=df['date'].max()
     )
 
     # Filter data
@@ -101,16 +101,16 @@ def main():
     if selected_professions:
         filtered_df = filtered_df[filtered_df['profession'].isin(selected_professions)]
     if len(date_range) == 2:
-        start_date = pd.to_datetime(date_range[0])
-        end_date = pd.to_datetime(date_range[1]) + timedelta(days=1) - timedelta(seconds=1)  # Include full end date
+        start_date = date_range[0]
+        end_date = date_range[1]
         filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
     elif len(date_range) == 1:
-        start_date = pd.to_datetime(date_range[0])
-        end_date = start_date + timedelta(days=1) - timedelta(seconds=1)  # Single day, include full day
-        filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
+        start_date = date_range[0]
+        end_date = start_date
+        filtered_df = filtered_df[filtered_df['date'] == start_date]
         
     # Tabs for different views
-    tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Performance Trends", "Comparison", "Custom Stats"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Overview", "Performance Trends", "Comparison", "Custom Stats", "Bubble Chart"])
 
     with tab1:
         st.header("Overview")
@@ -137,6 +137,8 @@ def main():
         
         # Group by name_profession and date
         trend_df = filtered_df.groupby(['date', 'name', 'profession'])[metric].mean().reset_index()
+        # Ensure date is in date format for plotting
+        trend_df['date'] = pd.to_datetime(trend_df['date']).dt.date
         fig_trend = px.line(trend_df, x='date', y=metric, color='name', 
                            line_group='profession', title=f"{metric.capitalize()} Trend Over Time")
         st.plotly_chart(fig_trend, use_container_width=True)
@@ -163,7 +165,7 @@ def main():
                                value="damage / duration")
         
         if st.button("Calculate"):
-            result = calculate_derived_stat(filtered_df, formula)
+            result = calculate_derived_stat(filtered_df, formula, "custom_metric")
             if result is not None:
                 filtered_df['custom_metric'] = result
                 st.write("Custom Metric Results:")
@@ -173,6 +175,80 @@ def main():
                 fig_custom = px.bar(filtered_df, x='name', y='custom_metric', 
                                    color='profession', title="Custom Metric Results")
                 st.plotly_chart(fig_custom, use_container_width=True)
+
+    with tab5:
+        st.header("Bubble Chart")
+        
+        # Available metrics
+        available_metrics = ['damage', 'damage_taken', 'healing', 'barrier', 
+                           'cleanses', 'boon_strips', 'resurrects', 'duration', 'num_fights']
+        
+        # Select or input custom metrics
+        st.write("Select predefined metrics or enter custom formulas (using pandas eval syntax). Available columns: " + 
+                ", ".join(filtered_df.columns))
+        
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            x_type = st.radio("X-axis Type", ["Predefined", "Custom"], key="x_type")
+            if x_type == "Predefined":
+                x_metric = st.selectbox("Select X-axis Metric", available_metrics, index=0, key="x_predefined")
+                x_column = x_metric
+                x_label = x_metric.capitalize()
+            else:
+                x_formula = st.text_input("Enter X-axis Formula (e.g., 'damage / duration')", 
+                                         value="damage", key="x_formula")
+                x_column = "custom_x"
+                x_label = "Custom X Metric"
+                result = calculate_derived_stat(filtered_df, x_formula, "X-axis")
+                if result is not None:
+                    filtered_df['custom_x'] = result
+
+        with col2:
+            y_type = st.radio("Y-axis Type", ["Predefined", "Custom"], key="y_type")
+            if y_type == "Predefined":
+                y_metric = st.selectbox("Select Y-axis Metric", available_metrics, index=1, key="y_predefined")
+                y_column = y_metric
+                y_label = y_metric.capitalize()
+            else:
+                y_formula = st.text_input("Enter Y-axis Formula (e.g., 'healing / duration')", 
+                                         value="healing", key="y_formula")
+                y_column = "custom_y"
+                y_label = "Custom Y Metric"
+                result = calculate_derived_stat(filtered_df, y_formula, "Y-axis")
+                if result is not None:
+                    filtered_df['custom_y'] = result
+
+        with col3:
+            size_type = st.radio("Bubble Size Type", ["Predefined", "Custom"], key="size_type")
+            if size_type == "Predefined":
+                size_metric = st.selectbox("Select Bubble Size Metric", available_metrics, index=2, key="size_predefined")
+                size_column = size_metric
+                size_label = size_metric.capitalize()
+            else:
+                size_formula = st.text_input("Enter Bubble Size Formula (e.g., 'num_fights * 10')", 
+                                            value="num_fights", key="size_formula")
+                size_column = "custom_size"
+                size_label = "Custom Size Metric"
+                result = calculate_derived_stat(filtered_df, size_formula, "Bubble Size")
+                if result is not None:
+                    filtered_df['custom_size'] = result
+
+        # Create bubble chart
+        if all(col in filtered_df.columns for col in [x_column, y_column, size_column]):
+            fig_bubble = px.scatter(
+                filtered_df,
+                x=x_column,
+                y=y_column,
+                size=size_column,
+                color='profession',
+                hover_data=['name', 'date'],
+                title=f"Bubble Chart: {x_label} vs {y_label} (Size: {size_label})",
+                size_max=60
+            )
+            st.plotly_chart(fig_bubble, use_container_width=True)
+        else:
+            st.warning("Please ensure all custom formulas are valid to display the bubble chart.")
 
 if __name__ == "__main__":
     main()
