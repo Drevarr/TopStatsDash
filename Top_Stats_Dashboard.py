@@ -3,7 +3,7 @@ import sqlite3
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 import shutil
 import uuid
@@ -84,10 +84,15 @@ def main():
     st.sidebar.header("Filters")
     selected_players = st.sidebar.multiselect("Select Players", options=sorted(df['name'].unique()))
     selected_professions = st.sidebar.multiselect("Select Professions", options=sorted(df['profession'].unique()))
-    date_range = st.sidebar.date_input("Select Date Range", 
-                                     [df['date'].min(), df['date'].max()],
-                                     min_value=datetime.strptime(df['date'].min(), '%Y-%m-%d-%H:%M:%S'),
-                                     max_value=datetime.strptime(df['date'].max(), '%Y-%m-%d-%H:%M:%S'))
+    # Ensure df['date'] is in datetime format
+    df['date'] = pd.to_datetime(df['date'])
+    # Date input with corrected min_value and max_value
+    date_range = st.sidebar.date_input(
+        "Select Date Range",
+        [df['date'].min().date(), df['date'].max().date()],
+        min_value=df['date'].min().date(),
+        max_value=df['date'].max().date()
+    )
 
     # Filter data
     filtered_df = df
@@ -96,9 +101,14 @@ def main():
     if selected_professions:
         filtered_df = filtered_df[filtered_df['profession'].isin(selected_professions)]
     if len(date_range) == 2:
-        filtered_df = filtered_df[(filtered_df['date'] >= date_range[0].strftime('%Y-%m-%d')) & 
-                                (filtered_df['date'] <= date_range[1].strftime('%Y-%m-%d'))]
-
+        start_date = pd.to_datetime(date_range[0])
+        end_date = pd.to_datetime(date_range[1]) + timedelta(days=1) - timedelta(seconds=1)  # Include full end date
+        filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
+    elif len(date_range) == 1:
+        start_date = pd.to_datetime(date_range[0])
+        end_date = start_date + timedelta(days=1) - timedelta(seconds=1)  # Single day, include full day
+        filtered_df = filtered_df[(filtered_df['date'] >= start_date) & (filtered_df['date'] <= end_date)]
+        
     # Tabs for different views
     tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Performance Trends", "Comparison", "Custom Stats"])
 
