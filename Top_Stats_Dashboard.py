@@ -165,7 +165,7 @@ def main():
                                value="damage / duration")
         
         if st.button("Calculate"):
-            result = calculate_derived_stat(filtered_df, formula, "custom_metric")
+            result = calculate_derived_stat(filtered_df, formula)
             if result is not None:
                 filtered_df['custom_metric'] = result
                 st.write("Custom Metric Results:")
@@ -177,7 +177,7 @@ def main():
                 st.plotly_chart(fig_custom, use_container_width=True)
 
     with tab5:
-        st.header("Bubble Chart")
+        st.header("Bubble Charts")
         
         # Available metrics
         available_metrics = ["damage", "down_contribution", "downs", "kills", "damage_taken", 
@@ -203,7 +203,7 @@ def main():
                                          value="damage", key="x_formula")
                 x_column = "custom_x"
                 x_label = "Custom X Metric"
-                result = calculate_derived_stat(filtered_df, x_formula, "X-axis")
+                result = calculate_derived_stat(filtered_df, x_formula)
                 if result is not None:
                     filtered_df['custom_x'] = result
 
@@ -218,7 +218,7 @@ def main():
                                          value="healing", key="y_formula")
                 y_column = "custom_y"
                 y_label = "Custom Y Metric"
-                result = calculate_derived_stat(filtered_df, y_formula, "Y-axis")
+                result = calculate_derived_stat(filtered_df, y_formula)
                 if result is not None:
                     filtered_df['custom_y'] = result
 
@@ -233,7 +233,7 @@ def main():
                                             value="num_fights", key="size_formula")
                 size_column = "custom_size"
                 size_label = "Custom Size Metric"
-                result = calculate_derived_stat(filtered_df, size_formula, "Bubble Size")
+                result = calculate_derived_stat(filtered_df, size_formula)
                 if result is not None:
                     filtered_df['custom_size'] = result
 
